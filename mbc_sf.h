@@ -58,7 +58,7 @@ static inline unsigned fsmget_(unsigned char **_p) {
   unsigned char *p = *_p,*e;
   int c, r = 0;
   while(*p && (*p<'0' || *p>'9')) p++;
-  r = strtoul(p, &e, 10);
+  r = strtoul((char*)p, (char**)&e, 10);
   *_p = e; 														//if(r) printf("%d,", r);
   return r;
 }

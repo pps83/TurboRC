@@ -98,9 +98,9 @@ static void mbu_init1(mbu *mb, unsigned n) {
 	}\
 }  
 
-#define MBU_NEW2( _mb_,_b1_,_b0_) mbu *_mb_ = malloc((_b0_)*(_b1_)*sizeof(_mb_[0])); if(!_mb_) die("malloc failed\n")
+#define MBU_NEW2( _mb_,_b1_,_b0_) mbu *_mb_ = (mbu *)malloc((_b0_)*(_b1_)*sizeof(_mb_[0])); if(!_mb_) die("malloc failed\n")
 #define MBU_NEWI2(_mb_,_b1_,_b0_) MBU_NEW2(_mb_,_b0_,_b1_); mbu_initp2(_mb_, _b0_, _b1_)
-#define MBU_NEW3( _mb_,_b2_,_b1_,_b0_) mbu *_mb_ = malloc((_b2_)*(_b1_)*(_b0_)*sizeof(_mb_[0])); if(!_mb_) die("malloc failed\n")
+#define MBU_NEW3( _mb_,_b2_,_b1_,_b0_) mbu *_mb_ = (mbu *)malloc((_b2_)*(_b1_)*(_b0_)*sizeof(_mb_[0])); if(!_mb_) die("malloc failed\n")
 #define MBU_NEWI3(_mb_,_b2_,_b1_,_b0_) MBU_NEW3(_mb_,_b2_,_b1_,_b0_); mbu_initp3(_mb_,_b2_,_b1_,_b0_)
 
 //------------------------------ context mixing with SSE ------------------------------------------------------

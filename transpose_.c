@@ -2,9 +2,8 @@
 #include "include_/conf.h"
 #include "include_/transpose.h"
 
-static unsigned _cpuisa;
 //--------------------- CPU detection -------------------------------------------
-    #if defined(__i386__) || defined(__x86_64__)
+    #if defined(__i386__) || defined(__x86_64__) || defined(_M_X64) || defined(_M_IX86)
       #if _MSC_VER >=1300
 #include <intrin.h>
       #elif defined (__INTEL_COMPILER)
@@ -20,7 +19,7 @@ static inline void cpuid(int reg[4], int id) {
 }
 
 static inline uint64_t xgetbv (int ctr) {
-      #if(defined _MSC_VER && (_MSC_FULL_VER >= 160040219) || defined __INTEL_COMPILER)
+      #if (defined(_MSC_VER) && _MSC_FULL_VER >= 160040219) || defined(__INTEL_COMPILER)
   return _xgetbv(ctr);
       #elif defined(__i386__) || defined(__x86_64__)
   unsigned a, d;
@@ -58,11 +57,11 @@ static inline uint64_t xgetbv (int ctr) {
 #define IS_AVX2      0x60
 #define IS_AVX512    0x800
 
-unsigned cpuisa(void) {
+static unsigned NOINLINE cpuisa_impl(void) {
   int c[4] = {0};
-  if(_cpuisa) return _cpuisa;
+  unsigned _cpuisa = 0;
   _cpuisa++;
-    #if defined(__i386__) || defined(__x86_64__)
+    #if defined(__i386__) || defined(__x86_64__) || defined(_M_X64) || defined(_M_IX86)
   cpuid(c, 0);
   if(c[0]) {
     cpuid(c, 1);
@@ -110,11 +109,19 @@ unsigned cpuisa(void) {
   return _cpuisa;
 }
 
+static unsigned _cpuisa = 0;
+
+unsigned cpuisa(void) {
+  if (_cpuisa == 0)
+    _cpuisa = cpuisa_impl();
+  return _cpuisa;
+}
+
 unsigned cpuini(unsigned cpuisa) { if(cpuisa) _cpuisa = cpuisa; return _cpuisa; }
 
-char *cpustr(unsigned cpuisa) {
+const char *cpustr(unsigned cpuisa) {
   if(!cpuisa) cpuisa = _cpuisa;
-    #if defined(__i386__) || defined(__x86_64__)
+    #if defined(__i386__) || defined(__x86_64__) || defined(_M_X64) || defined(_M_IX86)
   if(cpuisa >= IS_AVX512) {
     if(cpuisa & AVX512VBMI2) return "avx512vbmi2";
     if(cpuisa & AVX512VBMI)  return "avx512vbmi";
@@ -335,7 +342,7 @@ void tpxenc(unsigned char *in, unsigned n, unsigned char *out, unsigned esize) {
     for(op = out + esize*stride; ip < in+n;)
       *op++ = *ip++;          // TODO:xor
   }
-} 
+}
 
 void tpxdec(unsigned char *in, unsigned n, unsigned char *out, unsigned esize) {
   TPFUNC f;
@@ -373,9 +380,9 @@ void tp2denc(unsigned char *in, unsigned nx, unsigned ny, unsigned char *out, un
 	case 2: tp2denc2(in,nx,ny,out); break;
 	case 4: tp2denc4(in,nx,ny,out); break;
 	case 8: tp2denc8(in,nx,ny,out); break;
-	default: {  
-	  unsigned x,y; 
-      uint8_t  *op = out, *ip = in; 
+	default: {
+	  unsigned x,y;
+      uint8_t  *op = out, *ip = in;
       int     e;
       for(  x = 0; x < nx; x++)
         for(y = 0; y < ny; y++) E
@@ -389,8 +396,8 @@ void tp2ddec(unsigned char *in, unsigned nx, unsigned ny, unsigned char *out, un
 	case 2: tp2ddec2(in,nx,ny,out); break;
 	case 4: tp2ddec4(in,nx,ny,out); break;
 	case 8: tp2ddec8(in,nx,ny,out); break;
-    default: { unsigned x,y; 
-      uint8_t *op = out, *ip = in; 
+    default: { unsigned x,y;
+      uint8_t *op = out, *ip = in;
       int     e;
       for(  x = 0; x < nx; x++)
         for(y = 0; y < ny; y++) E
@@ -406,8 +413,8 @@ void tp3denc(unsigned char *in, unsigned nx, unsigned ny, unsigned nz, unsigned 
 	case 2: tp3denc2(in,nx,ny,nz,out); break;
 	case 4: tp3denc4(in,nx,ny,nz,out); break;
 	case 8: tp3denc8(in,nx,ny,nz,out); break;
-	default: {  unsigned x,y,z; 
-      uint8_t *op = out, *ip = in; 
+	default: {  unsigned x,y,z;
+      uint8_t *op = out, *ip = in;
       int e;
       for(    x = 0; x < nx; x++)
         for(  y = 0; y < ny; y++)
@@ -422,8 +429,8 @@ void tp3ddec(unsigned char *in, unsigned nx, unsigned ny, unsigned nz, unsigned 
 	case 2: tp3ddec2(in,nx,ny,nz,out); break;
 	case 4: tp3ddec4(in,nx,ny,nz,out); break;
 	case 8: tp3ddec8(in,nx,ny,nz,out); break;
-    default: {  unsigned x,y,z;  
-      uint8_t *op = out, *ip = in; 
+    default: {  unsigned x,y,z;
+      uint8_t *op = out, *ip = in;
       int e;
       for(x = 0; x < nx; ++x)
         for(y = 0; y < ny; ++y)
@@ -440,9 +447,9 @@ void tp4denc(unsigned char *in, unsigned nw, unsigned nx, unsigned ny, unsigned 
 	case 2: tp4denc2(in,nw,nx,ny,nz,out); break;
 	case 4: tp4denc4(in,nw,nx,ny,nz,out); break;
 	case 8: tp4denc8(in,nw,nx,ny,nz,out); break;
-	default: { 
-	  unsigned w, x, y, z; 
-      uint8_t  *op = out, *ip = in; 
+	default: {
+	  unsigned w, x, y, z;
+      uint8_t  *op = out, *ip = in;
       int      e;
       for(      w = 0; w < nw; w++)
         for(    x = 0; x < nx; x++)
@@ -458,9 +465,9 @@ void tp4ddec(unsigned char *in, unsigned nw, unsigned nx, unsigned ny, unsigned 
 	case 2: tp4ddec2(in,nw,nx,ny,nz,out); break;
 	case 4: tp4ddec4(in,nw,nx,ny,nz,out); break;
 	case 8: tp4ddec8(in,nw,nx,ny,nz,out); break;
-    default: {    
-	  unsigned w,x,y,z; 
-      uint8_t *op = out,*ip = in; 
+    default: {
+	  unsigned w,x,y,z;
+      uint8_t *op = out,*ip = in;
       int e;
       for(      w = 0; w < nw; w++)
         for(    x = 0; x < nx; ++x)

@@ -44,7 +44,7 @@ void fsm_init(int id) {
 	perror("fread failed\n");   				
   printf("fsm file '%s' read.length=%d\n", s, l);
   buf[l] = 0; 
-  fsminit_(buf, fsm, N_STATES);
+  fsminit_((unsigned char*)buf, fsm, N_STATES);
 }
 	
 #include "rc_.c"      // template functions 

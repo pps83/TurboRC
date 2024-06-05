@@ -39,12 +39,12 @@ size_t T3(rcmr,RC_PRD,enc)(unsigned char *in, size_t inlen, unsigned char *out R
   unsigned short sse[1<<(1+8)][17]; ssebinit(sse);
   
   for(ip = in; ip < in+inlen; ip++) { 
-	mbu *m1x = &mb1[cx1], *m2x = &mb1[cx2];
+	mbu *m1x = mb1[cx1], *m2x = mb1[cx2];
     unsigned y = 1<<8 | ip[0]; 
 	int      i;
     for(i = 8-1; i >= 0; --i) {
 	  unsigned x = y>>(i+1); 
-	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = &sse[RUNPARM x];
+	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = sse[RUNPARM x];
 	  mbur_enc(rcrange,rclow,rcilow, m0, RCPRM0,RCPRM1,op, RCB(y,i), m1, m2, msse);
     }																			OVERFLOW(in,inlen,out, op, goto e);
 	cx2 = cx1;
@@ -64,11 +64,11 @@ size_t T3(rcmr,RC_PRD,dec)(unsigned char *in, size_t outlen, unsigned char *out 
   unsigned short sse[1<<9][17]; ssebinit(sse);
   
   for(op = out; op < out+outlen; op++) { 
-	mbu *m1x = &mb1[cx1], *m2x = &mb1[cx2];
+	mbu *m1x = mb1[cx1], *m2x = mb1[cx2];
     int      i; 
     unsigned x = 1;
     for(i = 8-1; i >= 0; --i) {
-	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = &sse[RUNPARM x];
+	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = sse[RUNPARM x];
       mbur_dec(rcrange,rccode, m0, RCPRM0,RCPRM1,ip, x, m1, m2, msse);
     }
 	cx2   = cx1;
@@ -87,12 +87,12 @@ size_t T3(rcmrr,RC_PRD,enc)(unsigned char *in, size_t inlen, unsigned char *out 
   unsigned short sse[1<<(1+8)][17]; ssebinit(sse);
   
   for(ip = in; ip < in+inlen; ip++) { 
-	mbu *m1x = &mb1[cx1], *m2x = &mb1[cx2];
+	mbu *m1x = mb1[cx1], *m2x = mb1[cx2];
     unsigned y = 1<<8 | ip[0]; 
 	int      i;
     for(i = 8-1; i >= 0; --i) {
 	  unsigned x = y>>(i+1); 
-	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = &sse[RUNPARM x];
+	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = sse[RUNPARM x];
 	  mbur_enc(rcrange,rclow,rcilow, m0, RCPRM0,RCPRM1,op, RCB(y,i), m1, m2, msse);
     }																			OVERFLOW(in,inlen,out, op, goto e);
 	cx2 = cx1;
@@ -112,11 +112,11 @@ size_t T3(rcmrr,RC_PRD,dec)(unsigned char *in, size_t outlen, unsigned char *out
   unsigned short sse[1<<9][17]; ssebinit(sse);
   
   for(op = out; op < out+outlen; op++) { 
-	mbu *m1x = &mb1[cx1], *m2x = &mb1[cx2];
+	mbu *m1x = mb1[cx1], *m2x = mb1[cx2];
     int i; 
     unsigned x = 1;
     for(i = 8-1; i >= 0; --i) {
-	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = &sse[RUNPARM x];
+	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = sse[RUNPARM x];
       mbur_dec(rcrange,rccode, m0, RCPRM0,RCPRM1,ip, x, m1, m2, msse);
     }
 	cx2   = cx1;
@@ -141,7 +141,7 @@ size_t T3(rcm,RC_PRD,enc)(unsigned char *in, size_t inlen, unsigned char *out RC
     unsigned x = 1<<8 | ip[0]; 
     for(i = 8-1; i >= 0; --i) {
 	  unsigned y = x>>(i+1); 
-	  mbu *m0 = &mb0[y], *m1 = &m1x[y]; mbus *msse2 = &sse[y];
+	  mbu *m0 = &mb0[y], *m1 = &m1x[y]; mbus *msse2 = sse[y];
 	  mbum_enc(rcrange,rclow,rcilow, m0, RCPRM0,RCPRM1,op, RCB(x,i), m1, 0, msse2);
     }
 	cx = ip[0];																	OVERFLOW(in,inlen,out, op, goto e);  
@@ -163,7 +163,7 @@ size_t T3(rcm,RC_PRD,dec)(unsigned char *in, size_t outlen, unsigned char *out R
     int i; 
     unsigned x = 1;
     for(i = 8-1; i >= 0; --i) {
-	  mbu *m0 = &mb0[x], *m1 = &m1x[x]; mbus *msse = &sse[x];
+	  mbu *m0 = &mb0[x], *m1 = &m1x[x]; mbus *msse = sse[x];
       mbum_dec(rcrange,rccode, m0, RCPRM0,RCPRM1,ip, x, m1, 0, msse);
     }
     op[0] = cx = (unsigned char)x;
@@ -187,7 +187,7 @@ size_t T3(rcm2,RC_PRD,enc)(unsigned char *in, size_t inlen, unsigned char *out R
 	int i;
     for(i = 8-1; i >= 0; --i) {
 	  unsigned y = x>>(i+1); 
-	  mbu *m0 = &mb0[y], *m1 = &m1x[y], *m2 = &m2x[y]; mbus *msse = &sse[y];
+	  mbu *m0 = &mb0[y], *m1 = &m1x[y], *m2 = &m2x[y]; mbus *msse = sse[y];
 	  mbum2_enc(rcrange,rclow,rcilow, m0, RCPRM0,RCPRM1,op, RCB(x,i), m1, m2, msse);
     }
 	cx  = cx << 8 | ip[0];														OVERFLOW(in,inlen,out, op, goto e);     
@@ -211,7 +211,7 @@ size_t T3(rcm2,RC_PRD,dec)(unsigned char *in, size_t outlen, unsigned char *out 
     int i; 
     unsigned x = 1;
     for(i = 8-1; i >= 0; --i) {
-	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = &sse[x];
+	  mbu *m0 = &mb0[x], *m1 = &m1x[x], *m2 = &m2x[x]; mbus *msse = sse[x];
       mbum2_dec(rcrange,rccode, m0, RCPRM0,RCPRM1,ip, x, m1, m2, msse);
     }
     op[0] = cx = cx << 8 | (unsigned char)x;

@@ -56,7 +56,7 @@
 LIBAPI size_t T2(anscdf4senc,FSUFFIX)(unsigned char *in, size_t inlen, unsigned char *out, cdf_t *cdf) {
   unsigned char *op = out, *ip = in, *ep = out+inlen;
   anscdfini(0);
-
+  size_t l = 0;
   STATEDEF(st,ANSN);
   #define STE(_i_, _si_) ip--; ansenc(cdf,st[_si_],ep,ip[0])
   for(ip = in+inlen; ip > in+(inlen & ~3);) {                                  if(ep < in +   2+2*4) goto ovr;
@@ -66,7 +66,7 @@ LIBAPI size_t T2(anscdf4senc,FSUFFIX)(unsigned char *in, size_t inlen, unsigned 
     STE(0,1); STE(1,0); STE(2,1); STE(3, 0);
   }
   ansflush(st, ep, ANSN);
-  size_t l = (out+inlen) - ep;                                                 if(op + l >= out+inlen) goto ovr;
+  l = (out+inlen) - ep;                                                        if(op + l >= out+inlen) goto ovr;
   memcpy(op, ep, l); op += l;                                                  goto end; ovr:memcpy(out,in,inlen); op = out+inlen;
   end: return op - out;
 }
@@ -109,7 +109,7 @@ LIBAPI size_t T2(anscdf4dec,FSUFFIX)(unsigned char *in, size_t outlen, unsigned 
 LIBAPI size_t T2(anscdf4enc,FSUFFIX)(unsigned char *in, size_t inlen, unsigned char *out) {
   unsigned char *op = out,*ip = in,*in_ = in+inlen, *out_ = out+inlen;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize);
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize);
   anscdfini(0);
 
   for(; in < in_; in += iplen) {
@@ -139,10 +139,10 @@ LIBAPI size_t T2(anscdfuenc16,FSUFFIX)(unsigned char *_in, size_t _inlen, unsign
   unsigned char *op = out+4, *out_ = out+_inlen, *bp = out_;
   uint16_t      *in = (uint16_t *)_in;
   size_t        inlen = (_inlen+sizeof(in[0])-1)/sizeof(in[0]);
-
+  unsigned l;
   uint16_t      *ip = in, *in_ = in+inlen;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
   bitddef(bw, br); biteinir(bw,br,bp);
 
@@ -159,7 +159,7 @@ LIBAPI size_t T2(anscdfuenc16,FSUFFIX)(unsigned char *_in, size_t _inlen, unsign
     mnflush(op,(bp-8),_stk,stk, ANSN);                                                
   }
   bitflushr(bw,br,bp);
-  unsigned l = out_ - bp;                                                       if(op+l >= out_) goto ovr;
+  l = out_ - bp;                                                       if(op+l >= out_) goto ovr;
   memmove(op, bp, l); op += l; ctou32(out) = op - out;                          goto end; ovr:memcpy(out,_in,_inlen); op = out_;
   end:free(_stk);
   return op - out;
@@ -196,10 +196,10 @@ LIBAPI size_t T2(anscdfuzenc16,FSUFFIX)(unsigned char *_in, size_t _inlen, unsig
   unsigned char *op = out+4, *out_ = out+_inlen, *bp = out_;
   uint16_t      *in = (uint16_t *)_in;
   size_t        inlen = (_inlen+sizeof(in[0])-1)/sizeof(in[0]);
-
+  unsigned l;
   uint16_t      *ip = in, *in_ = in+inlen, cx = 0;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*4*sizeof(_stk[0])+64), *stk = _stk;     if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*4*sizeof(_stk[0])+64), *stk = _stk;     if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
   bitddef(bw, br); biteinir(bw,br,bp);
 
@@ -217,7 +217,7 @@ LIBAPI size_t T2(anscdfuzenc16,FSUFFIX)(unsigned char *_in, size_t _inlen, unsig
     mnflush(op,(bp-8),_stk,stk, ANSN);                                                //AC(op <= bp,"Fatal");
   }
   bitflushr(bw,br,bp);
-  unsigned l = out_-bp;                                                         if(op+l >= out_) goto ovr;
+  l = out_-bp;                                                         if(op+l >= out_) goto ovr;
   memmove(op, bp, l); op += l; ctou32(out) = op - out;                          goto end; ovr:memcpy(out,_in,_inlen); op = out_;
   end:free(_stk);
   return op - out;
@@ -255,10 +255,10 @@ LIBAPI size_t T2(anscdfvenc16,FSUFFIX)(unsigned char *_in, size_t _inlen, unsign
   unsigned char *op = out+4, *out_ = out+_inlen, *bp = out_;
   uint16_t      *in = (uint16_t *)_in;
   size_t        inlen = (_inlen+sizeof(in[0])-1)/sizeof(in[0]);
-
+  unsigned l;
   uint16_t      *ip = in, *in_ = in+inlen;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64), *stk = _stk;     if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64), *stk = _stk;     if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
   bitddef(bw, br); biteinir(bw,br,bp);
 
@@ -275,7 +275,7 @@ LIBAPI size_t T2(anscdfvenc16,FSUFFIX)(unsigned char *_in, size_t _inlen, unsign
     mnflush(op, (bp-8), _stk, stk, ANSN);                                             AS(op <= bp,"Fatal");
   }
   bitflushr(bw,br,bp);
-  unsigned l = out_ - bp;                                                       if(op+l >= out_) goto ovr;
+  l = out_ - bp;                                                       if(op+l >= out_) goto ovr;
   memmove(op, bp, l); op += l; ctou32(out) = op - out;                          goto end; ovr:memcpy(out,_in,_inlen); op = out_;
   end:free(_stk);
   return op - out;
@@ -312,10 +312,10 @@ LIBAPI size_t T2(anscdfvzenc16,FSUFFIX)(unsigned char *_in, size_t _inlen, unsig
   unsigned char *op = out+4, *out_ = out+_inlen, *bp = out_;
   uint16_t      *in = (uint16_t *)_in;
   size_t        inlen = (_inlen+sizeof(in[0])-1)/sizeof(in[0]);
-
+  unsigned l;
   uint16_t      *ip = in, *in_ = in+inlen, cx = 0;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64), *stk = _stk;      if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64), *stk = _stk;      if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
   bitddef(bw, br); biteinir(bw,br,bp);
 
@@ -333,7 +333,7 @@ LIBAPI size_t T2(anscdfvzenc16,FSUFFIX)(unsigned char *_in, size_t _inlen, unsig
     mnflush(op,(bp-8),_stk,stk, ANSN);                                          AS(op <= bp,"Fatal");
   }
   bitflushr(bw,br,bp);
-  unsigned l = out_ - bp;                                                       if(op+l >= out_) goto ovr;
+  l = out_ - bp;                                                       if(op+l >= out_) goto ovr;
   memmove(op, bp, l); op += l; ctou32(out) = op - out;                          goto end; ovr:memcpy(out,_in,_inlen); op = out_;
   end:free(_stk);
   return op - out;
@@ -370,10 +370,10 @@ LIBAPI size_t T2(anscdfvenc32,FSUFFIX)(unsigned char *_in, size_t _inlen, unsign
   unsigned char *op = out+4, *out_ = out+_inlen, *bp = out_;
   uint32_t      *in = (uint32_t *)_in;
   size_t        inlen = (_inlen+sizeof(in[0])-1)/sizeof(in[0]);
-
+  unsigned l;
   uint32_t      *ip = in, *in_ = in+inlen;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
   bitddef(bw, br); biteinir(bw,br,bp);
 
@@ -390,7 +390,7 @@ LIBAPI size_t T2(anscdfvenc32,FSUFFIX)(unsigned char *_in, size_t _inlen, unsign
     mnflush(op,(bp-8),_stk,stk, ANSN);                                                AS(op <= bp,"Fatal");
   }
   bitflushr(bw,br,bp);
-  unsigned l = out_-bp;                                                         if(op+l >= out_) goto ovr;
+  l = out_-bp;                                                         if(op+l >= out_) goto ovr;
   memmove(op, bp, l); op += l; ctou32(out) = op - out;                          goto end; ovr:memcpy(out,_in,_inlen); op = out_;
   end:free(_stk);
   return op - out;
@@ -427,10 +427,10 @@ LIBAPI size_t T2(anscdfvzenc32,FSUFFIX)(unsigned char *_in, size_t _inlen, unsig
   unsigned char *op = out+4, *out_ = out+_inlen, *bp = out_;
   uint32_t      *in = (uint32_t *)_in;
   size_t        inlen = (_inlen+sizeof(in[0])-1)/sizeof(in[0]);
-
+  unsigned l;
   uint32_t      *ip = in, *in_ = in+inlen, cx = 0;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
   bitddef(bw, br); biteinir(bw,br,bp);
 
@@ -448,7 +448,7 @@ LIBAPI size_t T2(anscdfvzenc32,FSUFFIX)(unsigned char *_in, size_t _inlen, unsig
     mnflush(op,(bp-8),_stk,stk, ANSN);                                                AS(op <= bp,"Fatal");
   }
   bitflushr(bw,br,bp);
-  unsigned l = out_ - bp;                                                       if(op+l >= out_) goto ovr;
+  l = out_ - bp;                                                       if(op+l >= out_) goto ovr;
   memmove(op, bp, l); op += l; ctou32(out) = op - out;                          goto end; ovr:memcpy(out,_in,_inlen); op = out_;
   end:free(_stk);
   return op - out;
@@ -485,7 +485,7 @@ LIBAPI size_t T2(anscdfvzdec32,FSUFFIX)(unsigned char *in, size_t _outlen, unsig
 LIBAPI size_t T2(anscdfenc,FSUFFIX)(unsigned char *in, size_t inlen, unsigned char *out) {
   unsigned char *op = out,*ip = in,*in_ = in+inlen, *out_ = out+inlen;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
 
   for(; in < in_; in += iplen) {
@@ -544,7 +544,7 @@ LIBAPI size_t T2(anscdf1dec,FSUFFIX)(unsigned char *in, size_t outlen, unsigned 
 LIBAPI size_t T2(anscdf1enc,FSUFFIX)(unsigned char *in, size_t inlen, unsigned char *out) {
   unsigned char *op = out,*ip = in,*in_ = in+inlen, *out_ = out+inlen, cx = 0;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
 
   for(; in < in_; in += iplen) {
@@ -566,7 +566,7 @@ LIBAPI size_t T2(anscdf1enc,FSUFFIX)(unsigned char *in, size_t inlen, unsigned c
 LIBAPI size_t T2(anscdfenc,FSUFFIX)(unsigned char *in, size_t inlen, unsigned char *out) {
   unsigned char *op = out,*ip = in,*in_ = in+inlen, *out_ = out+inlen;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
 
   for(; in < in_; in += iplen) {
@@ -606,7 +606,7 @@ LIBAPI size_t T2(anscdfdec,FSUFFIX)(unsigned char *in, size_t outlen, unsigned c
 LIBAPI size_t T2(anscdf1enc,FSUFFIX)(unsigned char *in, size_t inlen, unsigned char *out) {
   unsigned char *op = out,*ip = in,*in_ = in+inlen, *out_ = out+inlen, cx = 0;
   unsigned      iplen, blksize = min(ANSBLKSIZE,inlen),
-                *_stk = malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
+                *_stk = (unsigned*)malloc(blksize*2*sizeof(_stk[0])+64),*stk = _stk; if(!_stk) die("malloc error %d ", blksize); // 2 x stk[0] per nibble
   anscdfini(0);
 
   for(; in < in_; in += iplen) {
@@ -716,7 +716,7 @@ LIBAPI size_t ansbd(unsigned char *in, size_t outlen, unsigned char *out) {
   for(op = out; op < out_; ) { 
     unsigned char *eop = op + BSIZE/8; 
     if(eop > out_) eop = out_;
-    for(i = 0; i < ABSN; i++) { if(st[i] != ANS_LOW) die(stderr, "Fatal error - data corrupted: st=%x\n", st); ecdini(st[i], in); }
+    for(i = 0; i < ABSN; i++) { if(st[i] != ANS_LOW) die("Fatal error - data corrupted: st=%x\n", st[i]); ecdini(st[i], in); }
     
     for(; op < eop;) { 
       unsigned cx = 1;

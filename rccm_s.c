@@ -30,6 +30,9 @@
 #define RC_BITS 16     	    // RC_SIZE + RC_IO: set in turborc_.h
 #include "turborc_.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void ssebinit(unsigned short sse2[1<<(1+8)][17]) {  int r,i,j;	
   for(r=0; r<2; ++r)
     for(i=0; i<256; ++i)
@@ -42,6 +45,9 @@ void sseinit( unsigned short sse[1<<8][17]) { int i,j;
     for(int j=0; j<=16; ++j)
       sse[i][j] = (j<<(RC_BITS-4))-(j==RC_BITS);
 }		
+#ifdef __cplusplus
+}
+#endif
 
 #define RATE_S
 #include "mbc_s.h"       	// simple predictor

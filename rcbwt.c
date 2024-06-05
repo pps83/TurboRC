@@ -31,7 +31,7 @@ static unsigned lenmins[64] = { 0,  0,  0,  0,   0,  0,  0,  0,     0,  0,  0,  
 size_t rcbwtenc(unsigned char *in, size_t inlen, unsigned char *out, unsigned lev, unsigned thnum, unsigned _lenmin) { //char *ipp = malloc(inlen); memcpy(ipp,in,inlen);
   size_t        iplen  = inlen;
   unsigned      lenmin = _lenmin & 0x3ff, xbwt16 = (_lenmin & BWT_BWT16)?0x80:0, verbose = _lenmin & BWT_VERBOSE, nutf8 = _lenmin & BWT_NUTF8;
-  unsigned char *op    = out, *bwt   = vmalloc(inlen+1024), *ip = in;           if(!bwt) goto err;  // inlen + space for bwt indexes idxns
+  unsigned char *op    = out, *bwt   = (unsigned char*)vmalloc(inlen+1024), *ip = in;           if(!bwt) goto err;  // inlen + space for bwt indexes idxns
   if(lenmin==1) lenmin = lenmins[vlcexpo(inlen,1)];
 																				if(verbose) { printf("\nlev=%u MB=%zu expo=%u nutf8=%d ", lev, inlen/(1<<20), vlcexpo(inlen,1), nutf8?1:0);fflush(stdout); }
   if(lenmin) {  																if(verbose) { printf("lenmin=%u ", lenmin);fflush(stdout); }
@@ -55,6 +55,7 @@ size_t rcbwtenc(unsigned char *in, size_t inlen, unsigned char *out, unsigned le
   }
   *op++ = xbwt16|lenmin;
   if(lenmin) ctou32(op) = iplen, op += 4;
+  {
     #ifdef _BWTDIV
   *op++ = 0;
   saidx_t   *sa   = (saidx_t *)vmalloc((iplen+2)*sizeof(sa[0]));  i             f(!sa) goto err;
@@ -72,15 +73,16 @@ size_t rcbwtenc(unsigned char *in, size_t inlen, unsigned char *out, unsigned le
   }  else
 	  #endif
   {
-	libsais_bwt_aux(ip, bwt, sa, iplen,  0, 0, mod, idxs);        //libsais_bwt(ip, bwt, sa, iplen, fs);//if(ip == in) { memcpy(bwt, ip, iplen); ip = bwt; } memrev(ip, iplen);	ip[iplen] = 0;
+	libsais_bwt_aux(ip, bwt, sa, iplen,  0, 0, mod, (int32_t*)idxs);        //libsais_bwt(ip, bwt, sa, iplen, fs);//if(ip == in) { memcpy(bwt, ip, iplen); ip = bwt; } memrev(ip, iplen);	ip[iplen] = 0;
   }
   memcpy(op, idxs, idxsn*sizeof(idxs[0]));
   op   +=          idxsn*sizeof(idxs[0]);
     #endif
   vfree(sa);
+  }
   switch(lev) {
     case  0: memcpy(op, bwt, iplen); op += iplen; if(op-out == inlen) *op++ = 0; goto e; break;
-	case  2: op += xbwt16?becenc16(bwt, iplen, op):becenc8(bwt, iplen, op); break;
+	case  2: op += xbwt16?becenc16((uint16_t*)bwt, iplen, op):becenc8(bwt, iplen, op); break;
 	case  3: op += xbwt16?rcrlesenc16(  bwt, iplen, op):     rcrlesenc(bwt, iplen, op);        break;
  	case  4: op += xbwt16?rcrlessenc16( bwt, iplen, op, 4,7):rcrlessenc( bwt, iplen, op, 4,7); break;
 	case  5: op += xbwt16?rcrle1senc16( bwt, iplen, op):     rcrle1senc( bwt, iplen, op);      break;
@@ -114,11 +116,11 @@ size_t rcbwtdec(unsigned char *in, size_t outlen, unsigned char *out, unsigned l
   ip++; // idxsn
   memcpy(idxs, ip, idxsn*sizeof(idxs[0])); ip += idxsn*sizeof(idxs[0]);
     #endif
-  unsigned char *_bwt = vmalloc(oplen+128), *op = out, *bwt = _bwt;  if(!_bwt) die("malloc failed\n");
+  unsigned char *_bwt = (unsigned char*)vmalloc(oplen+128), *op = out, *bwt = _bwt;  if(!_bwt) die("malloc failed\n");
     {      if(lenmin) { bwt = out; op = _bwt; } }
   switch(lev) {
     case  0: memcpy(bwt,    ip, oplen+bwtx);      break;
-	case  2: xbwt16?becdec16(ip, oplen+bwtx, bwt):becdec8(ip, oplen+bwtx, bwt); break;
+	case  2: xbwt16?becdec16(ip, oplen+bwtx, (uint16_t*)bwt):becdec8(ip, oplen+bwtx, bwt); break;
 	case  3: xbwt16?rcrlesdec16(  ip, oplen+bwtx, bwt):      rcrlesdec(  ip, oplen+bwtx, bwt); break;
 	case  4: xbwt16?rcrlessdec16( ip, oplen+bwtx, bwt, 4, 7):rcrlessdec( ip, oplen+bwtx, bwt, 4, 7); break;
 	case  5: xbwt16?rcrle1sdec16( ip, oplen+bwtx, bwt):      rcrle1sdec( ip, oplen+bwtx, bwt); break;
@@ -136,7 +138,7 @@ size_t rcbwtdec(unsigned char *in, size_t outlen, unsigned char *out, unsigned l
   if(xbwt16) { rc = libsais16_unbwt_aux(bwt, op, sa, oplen_, 0, mod, idxs); if(oplen & 1) op[oplen-1] = bwt[oplen-1]; }
   else
 	  #endif
-   rc = libsais_unbwt_aux(bwt, op, sa, oplen, 0, mod, idxs); 	//libsais_unbwt(bwt, op, sa, oplen, idxs[0]);  //#bwtinv(bwt, oplen, op, NULL, idxs, idxsn); memrev(op, oplen);  //op[256]=0; printf("%s ", op);
+   rc = libsais_unbwt_aux(bwt, op, sa, oplen, 0, mod, (int32_t*)idxs); 	//libsais_unbwt(bwt, op, sa, oplen, idxs[0]);  //#bwtinv(bwt, oplen, op, NULL, idxs, idxsn); memrev(op, oplen);  //op[256]=0; printf("%s ", op);
     #endif
   vfree(sa);
 

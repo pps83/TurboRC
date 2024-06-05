@@ -402,7 +402,7 @@ size_t T3(rcx,RC_PRD,dec)(unsigned char *in, size_t outlen, unsigned char *out R
 #define MBC_C2 15
   #if RC_PRDID == 1
 int mbc_c = 15;
-mbcset(unsigned m) { mbc_c = m; if(mbc_c > MBC_C2) mbc_c = MBC_C2; if(mbc_c < 4) mbc_c = 4; } // set context bits length 1-16
+void mbcset(unsigned m) { mbc_c = m; if(mbc_c > MBC_C2) mbc_c = MBC_C2; if(mbc_c < 4) mbc_c = 4; } // set context bits length 1-16
   #else
 extern int mbc_c;
   #endif
@@ -501,7 +501,7 @@ size_t T3(rcg,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *ou
 
 size_t T3(rcg,RC_PRD,dec16)(unsigned char *in, size_t _outlen, unsigned char *_out RCPRM) { 
   unsigned char *ip = in;
-  uint16_t      *out = _out, *op;
+  uint16_t      *out = (uint16_t*)_out, *op;
   OUTDEC;
   rcdecdec(rcrange,rccode, ip);               
   MBG_DEC(mbg0c, mbguc, mbgbc, 32, 32); 
@@ -528,7 +528,7 @@ size_t T3(rcg,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *ou
 
 size_t T3(rcg,RC_PRD,dec32)(unsigned char *in, size_t _outlen, unsigned char *_out RCPRM) { 
   unsigned char *ip = in;
-  uint32_t      *out = _out, *op;
+  uint32_t      *out = (uint32_t*)_out, *op;
   OUTDEC;
   rcdecdec(rcrange,rccode, ip);
   MBG_DEC(mbg0c, mbguc, mbgbc, 33, 33); 
@@ -678,7 +678,7 @@ size_t T3(rcr,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *ou
 
 size_t T3(rcr,RC_PRD,dec16)(unsigned char *in, size_t _outlen, unsigned char *_out RCPRM) { 
   unsigned char *ip = in;
-  uint16_t      *out = _out, *op;
+  uint16_t      *out = (uint16_t*)_out, *op;
   OUTDEC;
   unsigned      ema = 0;
   rcdecdec(rcrange,rccode, ip);                
@@ -824,7 +824,7 @@ size_t T3(rcrz,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *o
 
 size_t T3(rcrz,RC_PRD,dec32)(unsigned char *in, size_t _outlen, unsigned char *_out RCPRM) { 
   unsigned char *ip = in;
-  uint32_t      *out = _out, *op, cx = 0;
+  uint32_t      *out = (uint32_t*)_out, *op, cx = 0;
   OUTDEC;
   unsigned      ema = 0;
   rcdecdec(rcrange,rccode, ip);                    
@@ -1020,6 +1020,7 @@ size_t T3(rcrle1,RC_PRD,dec16)(unsigned char *in, size_t _outlen, unsigned char 
 size_t T3(rcv,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint16_t      *in = (uint16_t *)_in, *ip, cx = 0, vb=VLC_VB8;
+  unsigned l;
   INDEC;
   rcencdec(rcrange,rclow,rcilow);                       
   MBU_DEC2(mb1, 1<<CXN, 1<<vlcbits(VLC_VN8));
@@ -1032,7 +1033,7 @@ size_t T3(rcv,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *ou
 	cx = ip[0];									    							OVERFLOWR(_in, _inlen, op,op_);
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; 
+  bitflushr(bw,br,op_); l = out_-op_; 
   memmove(op, op_, l); op += l; ctou32(out) = op-out;   						OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1059,6 +1060,7 @@ size_t T3(rcv,RC_PRD,dec16)(unsigned char *in, size_t _outlen, unsigned char *_o
 size_t T3(rcvz,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint16_t      *in = (uint16_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC;
   rcencdec(rcrange,rclow,rcilow);                       
   MBU_DEC2(mb1, 1<<CXN, 1<<vlcbits(VLC_VN8));   
@@ -1071,7 +1073,7 @@ size_t T3(rcvz,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *o
 	cx = ip[0];									  OVERFLOWR(_in, _inlen, op,op_);
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1112,6 +1114,7 @@ static unsigned expvb32(uint32_t *in, size_t inlen, unsigned vn, unsigned vm) {
 size_t T3(rcv,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+5, *out_ = out+_inlen, *op_=out_;
   uint32_t      *in = (uint32_t *)_in, *ip, cx = 0, vb = VLC_VB8;
+  unsigned l;
   INDEC;
   rcencdec(rcrange,rclow,rcilow);                       
   MBU_DEC2(mb, 1<<CXN, 1<<vlcbits(VLC_VN8));   
@@ -1128,7 +1131,7 @@ size_t T3(rcv,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *ou
 	OVERFLOWR(_in, _inlen, op,op_);
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1155,6 +1158,7 @@ size_t T3(rcv,RC_PRD,dec32)(unsigned char *in, size_t _outlen, unsigned char *_o
 size_t T3(rcvz,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) { 
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint32_t      *in = (uint32_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC;  
   rcencdec(rcrange,rclow,rcilow);                       
   MBU_DEC2(mb, 1<<CXN, 1<<vlcbits(VLC_VN8));   
@@ -1167,7 +1171,7 @@ size_t T3(rcvz,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *o
 	cx = ip[0];									    OVERFLOWR(_in, _inlen, op,op_);
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1195,6 +1199,7 @@ size_t T3(rcvz,RC_PRD,dec32)(unsigned char *in, size_t _outlen, unsigned char *_
 size_t T3(rcvg,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint16_t      *in = (uint16_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC;  
   rcencdec(rcrange,rclow,rcilow);                       
   MBG_DEC(mbg0, mbgu, mbgb, 33, 33); 			 
@@ -1206,7 +1211,7 @@ size_t T3(rcvg,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *o
 	cx = ip[0];																		  OVERFLOWR(_in, _inlen,op,op_);										    
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1230,6 +1235,7 @@ size_t T3(rcvg,RC_PRD,dec16)(unsigned char *in, size_t _outlen, unsigned char *_
 size_t T3(rcvgz,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint16_t      *in = (uint16_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC;
   rcencdec(rcrange,rclow,rcilow);                      
   MBG_DEC(mbg0, mbgu, mbgb, 33, 33);
@@ -1241,7 +1247,7 @@ size_t T3(rcvgz,RC_PRD,enc16)(unsigned char *_in, size_t _inlen, unsigned char *
 	cx = ip[0];																		  OVERFLOWR(_in, _inlen,op,op_);			    
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1265,6 +1271,7 @@ size_t T3(rcvgz,RC_PRD,dec16)(unsigned char *in, size_t _outlen, unsigned char *
 size_t T3(rcvg,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint32_t      *in = (uint32_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC;
   rcencdec(rcrange,rclow,rcilow);                       
   MBG_DEC(mbg0, mbgu, mbgb, 33, 33); 
@@ -1276,7 +1283,7 @@ size_t T3(rcvg,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *o
 	cx = ip[0];					OVERFLOWR(_in, _inlen,op,op_);				    
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1300,6 +1307,7 @@ size_t T3(rcvg,RC_PRD,dec32)(unsigned char *in, size_t _outlen, unsigned char *_
 size_t T3(rcvgz,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint32_t      *in = (uint32_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC;
   rcencdec(rcrange,rclow,rcilow);                       
   MBG_DEC(mbg0, mbgu, mbgb, 33, 33);
@@ -1312,7 +1320,7 @@ size_t T3(rcvgz,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *
 	cx = ip[0];																	      OVERFLOWR(_in, _inlen,op,op_);			    
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1338,6 +1346,7 @@ size_t T3(rcvgz,RC_PRD,dec32)(unsigned char *in, size_t _outlen, unsigned char *
 size_t T3(rcv10,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint32_t      *in = (uint32_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC;
   rcencdec(rcrange,rclow,rcilow);                       
   MBU_DEC2(mb, 1<<CXN, 1<<vlcbits(VLC_VN10));   
@@ -1350,7 +1359,7 @@ size_t T3(rcv10,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *
 	cx = ip[0];						OVERFLOWR(_in, _inlen,op,op_);			    
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1376,6 +1385,7 @@ size_t T3(rcv10,RC_PRD,dec32)(unsigned char *in, size_t _outlen, unsigned char *
 size_t T3(rcve,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint32_t      *in = (uint32_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC;
   rcencdec(rcrange,rclow,rcilow);                       
   MBU_DEC2(mb, 1<<CXN, 1<<vlcbits(VLC_VN12));   
@@ -1388,7 +1398,7 @@ size_t T3(rcve,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *o
 	cx = ip[0];						OVERFLOWR(_in, _inlen,op,op_);			    
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }
@@ -1415,6 +1425,7 @@ size_t T3(rcve,RC_PRD,dec32)(unsigned char *in, size_t _outlen, unsigned char *_
 size_t T3(rcvez,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *out RCPRM) {
   unsigned char *op = out+4, *out_ = out+_inlen, *op_=out_;
   uint32_t      *in = (uint32_t *)_in, *ip, cx = 0;
+  unsigned l;
   INDEC; 
   rcencdec(rcrange,rclow,rcilow);                       
   MBU_DEC2(mb, 1<<CXN, 1<<vlcbits(VLC_VN12));             	    
@@ -1427,7 +1438,7 @@ size_t T3(rcvez,RC_PRD,enc32)(unsigned char *_in, size_t _inlen, unsigned char *
 	cx = ip[0];									    OVERFLOWR(_in, _inlen,op,op_);
   }
   rceflush(rcrange,rclow,rcilow, op);
-  bitflushr(bw,br,op_); unsigned l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
+  bitflushr(bw,br,op_); l = out_-op_; memmove(op, op_, l); op += l; ctou32(out) = op-out;   
   OVERFLOW(_in,_inlen,out, op, goto e);
   e:return op - out;
 }

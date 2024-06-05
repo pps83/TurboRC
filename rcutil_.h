@@ -126,7 +126,7 @@ for(; ip > _in_ && ip[-1] == _c_; ip--); } while(0)
 #define BROADCAST64(_c_, _bits_)  (~UINT64_C(0)/((1<<_bits_)-1) * (_c_))	  
 #define RUN_64(_ip_,_bits_, _goto_) if((_z = (ctou64(_ip_) ^ cu64))) { _ip_ += ctz64(_z)/_bits_; _goto_; } _ip_ += 64/_bits_;
 
-static ALWAYS_INLINE size_t memrun8(uint8_t const *in, uint8_t const *in_) { uint8_t *ip = in, c = *ip; 
+static ALWAYS_INLINE size_t memrun8(uint8_t const *in, uint8_t const *in_) { const uint8_t *ip = in, c = *ip; 
   uint64_t cu64 = BROADCAST64(c, 8);
   while(ip+32 < in_) { uint64_t _z; RUN_64(ip, 8, goto a); RUN_64(ip, 8, goto a); RUN_64(ip, 8, goto a); RUN_64(ip, 8, goto a); }
   while(ip+ 8 < in_) { uint64_t _z; RUN_64(ip, 8, goto a); }
@@ -134,7 +134,7 @@ static ALWAYS_INLINE size_t memrun8(uint8_t const *in, uint8_t const *in_) { uin
   a: return ip - in; 
 }
 
-static ALWAYS_INLINE size_t memrun16(uint16_t const *in, uint16_t const *in_) { uint16_t *ip = in, c = *ip; 
+static ALWAYS_INLINE size_t memrun16(uint16_t const *in, uint16_t const *in_) { const uint16_t *ip = in, c = *ip; 
   uint64_t cu64 = BROADCAST64(c, 16);
   while(ip+16 < in_) { uint64_t _z; RUN_64(ip, 16, goto a); RUN_64(ip, 16, goto a); RUN_64(ip, 16, goto a); RUN_64(ip, 16, goto a); }
   while(ip < in_ && *ip == c) ip++;

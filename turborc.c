@@ -275,7 +275,7 @@ size_t befgen(FILE *fi, unsigned char *out, size_t outsize, int fmt, int isize, 
       }
     }
   }
-  end:;if(verbose >= 5) printf(" n=%lld \n", op-out);
+  end:;if(verbose >= 5) printf(" n=%zu \n", op-out);
   if(ovf) { unsigned l = (op-out)/abs(osize); 
     printf("Number of items truncated=%u of %u = %.2f%%\n", ovf, l, (double)ovf*100.0/(double)l ); 
   }
@@ -290,7 +290,7 @@ int memcheck(unsigned char *in, unsigned n, unsigned char *cpy) {
       return i+1; 
     }
   return 0;
-}
+} 
 
 //************************ TurboRC functions *******************************************
 // functions parameters
@@ -1014,7 +1014,7 @@ int main(int argc, char* argv[]) {
   FILE *fi = xstdin ?stdin :fopen(finame, "rb"); if(!fi) { perror(finame); return 1; }
   FILE *fo = xstdout?stdout:fopen(foname, "wb"); if(!fo) { perror(finame); return 1; } 
     #ifndef NO_COMP 
-  if(!decomp) {  																						if(verbose>3) printf("bsize=%u ", bsize);
+  if(!decomp) {  																						if(verbose>3) printf("bsize=%zu ", bsize);
     hd_t hd = { 0 }; hd.magic = MAGIC; hd.bsize = bsize; hd.codec = codec; hd.lev = lev; hd.prdid = prdid; hd.prm1 = prm1; hd.prm2 = prm2; 
     if((rc = hdwr(&hd, fo)) < 0) ERR(-rc); folen = rc;      
     in  = vmalloc(bsize+1024);
@@ -1044,7 +1044,7 @@ int main(int argc, char* argv[]) {
           #ifndef _NDELTA
         case 22: delta8e24(in,inlen,out); clen = inlen+1; break;
           #endif
-	      #ifndef _NQUANT)
+	      #ifndef _NQUANT
 	        #if defined(FLT16_BUILTIN)
         case 24: { _Float16 fmin = -1.16, fmax = 1.4; if(gmin != FP_ZERO) fmin = gmin; if(gmax != FP_ZERO) fmax = gmax;
 		  if(quantb > 8) quantb = 8;                                     
@@ -1115,7 +1115,7 @@ int main(int argc, char* argv[]) {
           #endif
         case 21: utf8dec(   in, outlen, out);        break;
         case 22: delta8d24(in,outlen,out); break; 
-	      #ifndef _NQUANT)
+	      #ifndef _NQUANT
 	        #if defined(FLT16_BUILTIN) 
 	    case 24: { _Float16 fmin = ctof16(in+inlen-5), fmax = ctof16(in+inlen-3); quantb = ctou8(in+inlen-1); if(verbose>3) printf("len = %u R:[%g - %g] q=%u ", outlen, (double)fmin, (double)fmax, quantb);
 	      fpquant8d16(in, outlen, out, BZMASK32(quantb), fmin, fmax, inlen-5); 

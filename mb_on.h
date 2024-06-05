@@ -52,12 +52,12 @@
 
 // Decode char with context 'cx' of size 'cxbits' bits. Decoded char = (unsigned char)cx  
 #define mbcdec(rcrange,rccode, _cx_, _cxbits_, _m_,_prm0_,_prm1_,_ip_) { \
-  mbu      *_mh = &_m_[MBC_(_cx_, _cxbits_)],*_m;\
+  mbu      *_mh = _m_[MBC_(_cx_, _cxbits_)],*_m;\
   unsigned _y = (_cx_) >> _cxbits_;\
   _m = &_mh[(_y & 0xf) << 2 | 3]; mbu_dec(rcrange,rccode, _m,_prm0_,_prm1_,_ip_, _y); /* high nibble*/\
   _m = &_mh[(_y & 0xf) << 2 | 2]; mbu_dec(rcrange,rccode, _m,_prm0_,_prm1_,_ip_, _y);\
   _m = &_mh[(_y & 0xf) << 2 | 1]; mbu_dec(rcrange,rccode, _m,_prm0_,_prm1_,_ip_, _y);\
-  _m = &_mh[(_y & 0xf) << 2    ]; mbu_dec(rcrange,rccode, _m,_prm0_,_prm1_,_ip_, _y); _cx_ = _cx_ << 4 | _y & 0xf; _mh = &_m_[1<<_cxbits_ | MBC_(_cx_, _cxbits_)]; _y = (_cx_) >> _cxbits_;\
+  _m = &_mh[(_y & 0xf) << 2    ]; mbu_dec(rcrange,rccode, _m,_prm0_,_prm1_,_ip_, _y); _cx_ = _cx_ << 4 | _y & 0xf; _mh = _m_[1<<_cxbits_ | MBC_(_cx_, _cxbits_)]; _y = (_cx_) >> _cxbits_;\
   _m = &_mh[(_y & 0xf) << 2 | 3]; mbu_dec(rcrange,rccode, _m,_prm0_,_prm1_,_ip_, _y); /* low nibble*/\
   _m = &_mh[(_y & 0xf) << 2 | 2]; mbu_dec(rcrange,rccode, _m,_prm0_,_prm1_,_ip_, _y);\
   _m = &_mh[(_y & 0xf) << 2 | 1]; mbu_dec(rcrange,rccode, _m,_prm0_,_prm1_,_ip_, _y);\

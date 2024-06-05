@@ -111,7 +111,7 @@ void vfree(void *address) {
   if(_n_ < lenmin) { memcpy(out, in, _n_); return _n_;}\
   if(!hbits) { hbits = _n_ >= (1<<24)?21:H_BITS; }\
   hbits = hbits>12?hbits:12;\
-  if(hbits > H_BITS && !(htab = calloc(1<<hbits, 4))) { htab = _htab; hbits = H_BITS; }
+  if(hbits > H_BITS && !(htab = (unsigned*)calloc(1<<hbits, 4))) { htab = _htab; hbits = H_BITS; }
 
 size_t lzpenc(unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out, unsigned lenmin, unsigned hbits) {	//printf("m=%u ", lenmin);
   unsigned      _htab[1<<H_BITS] = {0}, *htab = _htab, cl, cx, h4 = 0;
@@ -202,9 +202,9 @@ uint8_t *rcqlfc(uint8_t *__restrict in, size_t n, uint8_t *__restrict out, uint8
         #endif
 	for(q = p; q > r2c; ) { // move to front 	
 		  #ifdef __AVX2__ 
-      q -= 32; _mm256_storeu_si256(q+1,_mm256_loadu_si256((__m256i*)q)); 
+      q -= 32; _mm256_storeu_si256((__m256i*)(q+1),_mm256_loadu_si256((__m256i*)q));
           #elif defined(__SSE__)
-      q -= 16; _mm_storeu_si128(q+1,   _mm_loadu_si128((__m128i*)q));
+      q -= 16; _mm_storeu_si128((__m128i*)(q+1),   _mm_loadu_si128((__m128i*)q));
 		  #else
 	  q -= 16; ctou64(q+1+8) = ctou64(q+8); ctou64(q+1) = ctou64(q); 
           #endif 
@@ -321,10 +321,10 @@ size_t utf8enc(unsigned char *__restrict in, size_t inlen, unsigned char *__rest
   #define SYMBITS     16
   unsigned char *ip, *op = out, cinv = 0;
   sym_t          stab[1<<SYMBITS] = {0};
-  
+  unsigned hdlen, cnt8;
     #ifdef NOHASH
   #define HBITS 24    // 16*2 = 32MB
-  unsigned short *stabh = calloc((size_t)(1<<HBITS), sizeof(stabh[0])); if(!stabh) die("utf8enc: calloc failed size=%z\n", 1<<HBITS);
+  unsigned short *stabh = (unsigned short*)calloc((size_t)(1<<HBITS), sizeof(stabh[0])); if(!stabh) die("utf8enc: calloc failed size=%z\n", 1<<HBITS);
 	#else
   #define HBITS (SYMBITS+1)
   #define HMASK ((1<<HBITS)-1)
@@ -366,7 +366,7 @@ size_t utf8enc(unsigned char *__restrict in, size_t inlen, unsigned char *__rest
     case 1: qsort(stab, stabn, sizeof(sym_t), cmpsnd); break;  					// sort by count   
   }
   
-  unsigned cnt8 = 0; cnt = 0; 
+  cnt8 = 0; cnt = 0; 
   for(int i = 0; i < stabn; i++) { 
     if(stab[i].c <= 0xff) cnt8 += stab[i].cnt; 
 	cnt += stab[i].cnt; 
@@ -377,7 +377,7 @@ size_t utf8enc(unsigned char *__restrict in, size_t inlen, unsigned char *__rest
   CREHASH(stab, stabh,HBITS,HMASK, stabn);		                                // rehash after sort
   op = out+4; 														
   if(itmax <= 1 || !xprep8) op = symsput(stab, stabn, op, xprep8?1:0);		    // output the dictionary 				
-  unsigned hdlen = op - out; 
+  hdlen = op - out; 
   if(hdlen & 1) *op++ = 0; 														// offset to data must be even for 16 bits bwt
   
   if(itmax>1 || !xprep8) { 							                            if(verbose) { printf("'16 bits output' "); fflush(stdout); } 
@@ -686,11 +686,11 @@ void fpstat(unsigned char *in, size_t n, unsigned char *out, int s, unsigned cha
   int           expo = 0,e;
   if(_tmp || verbose > 4) {
     unsigned char *tmp = _tmp;
-    if(!tmp) { tmp = malloc(n*esize);  if(!tmp) die("malloc failed\n"); }  memcpy(tmp, out, n*esize);
+    if(!tmp) { tmp = (unsigned char*)malloc(n*esize);  if(!tmp) die("malloc failed\n"); }  memcpy(tmp, out, n*esize);
     switch(esize) {
-      case 2: { uint16_t *p,*t = tmp; qsort(tmp, n, 2, cmpua16); for(uni=zero=0,p = t; p < t+n-1; p++) { if(p[0] != p[1]) uni++; if(!p[0]) zero++; } } break;
-	  case 4: { uint32_t *p,*t = tmp; qsort(tmp, n, 4, cmpua32); for(uni=zero=0,p = t; p < t+n-1; p++) { if(p[0] != p[1]) uni++; if(!p[0]) zero++; } } break;
-	  case 8: { uint64_t *p,*t = tmp; qsort(tmp, n, 8, cmpua64); for(uni=zero=0,p = t; p < t+n-1; p++) { if(p[0] != p[1]) uni++; if(!p[0]) zero++; } } break;
+      case 2: { uint16_t *p,*t = (uint16_t *)tmp; qsort(tmp, n, 2, cmpua16); for(uni=zero=0,p = t; p < t+n-1; p++) { if(p[0] != p[1]) uni++; if(!p[0]) zero++; } } break;
+	  case 4: { uint32_t *p,*t = (uint32_t *)tmp; qsort(tmp, n, 4, cmpua32); for(uni=zero=0,p = t; p < t+n-1; p++) { if(p[0] != p[1]) uni++; if(!p[0]) zero++; } } break;
+	  case 8: { uint64_t *p,*t = (uint64_t *)tmp; qsort(tmp, n, 8, cmpua64); for(uni=zero=0,p = t; p < t+n-1; p++) { if(p[0] != p[1]) uni++; if(!p[0]) zero++; } } break;
 	  default: die("#fpstat");
     } 
     if(!_tmp) free(tmp);
@@ -792,6 +792,7 @@ void fpstat(unsigned char *in, size_t n, unsigned char *out, int s, unsigned cha
 #define FPQUANTE8(t_t, _in_, _inlen_, _out_, qmax, t_s, pfmin, pfmax, _zmin_, _fpquante_) {\
   t_t           fmin = *pfmin, fmax = *pfmax, *_ip;\
   unsigned char *_op = _out_, *_ep_ = _out_ + _inlen_, *_ep = _ep_;              unsigned cm = 0,cx = 0;\
+  unsigned _l; \
   if(fmin == 0.0 && fmax == 0.0) {\
 	fmax = _in_[0], fmin = _in_[0];\
     for(_ip = _in_; _ip < _in_ + (_inlen_/(t_s/8)); _ip++)\
@@ -806,10 +807,10 @@ void fpstat(unsigned char *in, size_t n, unsigned char *out, int s, unsigned cha
     else _fpquante_(t_s, _op, _f, fmin, _delta); \
                                                                                 if(_op+8 >= _ep) goto ovr;\
   }                                                                             if(verbose > 2) printf("qmax=%u outliers:%u+%u=%u ",qmax, cm, cx, cm+cx);\
-  unsigned _l = _ep_ - _ep; 													if(_op+_l >= _ep_) goto ovr;\
+  _l = _ep_ - _ep; 													if(_op+_l >= _ep_) goto ovr;\
   memcpy(_op, _ep, _l); _op += _l;\
   return _op - _out_;\
-  ovr:                                                                          if(verbose>2) printf("overflow:%u ", _inlen_); \
+  ovr:                                                                          if(verbose>2) printf("overflow:%zu ", _inlen_); \
     memcpy(_out_, _in_, _inlen_); return _inlen_;\
 }
 

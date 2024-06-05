@@ -80,8 +80,8 @@
   _st_ = STATEUPD(_mb_,_st_,_x_);\
   _mv0 = _mm_add_epi16(_mv0,_mm_srai_epi16(_mm_add_epi16(_mm_sub_epi16(_crv0,_mv0),_mm_and_si128(_gv0,_cmv)), CDFRATE));\
   _mv1 = _mm_add_epi16(_mv1,_mm_srai_epi16(_mm_add_epi16(_mm_sub_epi16(_crv1,_mv1),_mm_and_si128(_gv1,_cmv)), CDFRATE));\
-  _mm_storeu_si128((const __m128i *)(_mb_),   _mv0);\
-  _mm_storeu_si128((const __m128i *)&(_mb_)[8], _mv1);\
+  _mm_storeu_si128((__m128i *)(_mb_),   _mv0);\
+  _mm_storeu_si128((__m128i *)&(_mb_)[8], _mv1);\
 }
 
 #define cdf16upd(_mb_, _x_) {\
@@ -92,8 +92,8 @@
 	      _gv1 = _mm_cmpgt_epi16(_mv1, _sv);\
   _mv0 = _mm_add_epi16(_mv0,_mm_srai_epi16(_mm_add_epi16(_mm_sub_epi16(_crv0,_mv0),_mm_and_si128(_gv0,_cmv)), CDFRATE));\
   _mv1 = _mm_add_epi16(_mv1,_mm_srai_epi16(_mm_add_epi16(_mm_sub_epi16(_crv1,_mv1),_mm_and_si128(_gv1,_cmv)), CDFRATE));\
-  _mm_storeu_si128((const __m128i *)(_mb_),   _mv0);\
-  _mm_storeu_si128((const __m128i *)&(_mb_)[8], _mv1);\
+  _mm_storeu_si128((__m128i *)(_mb_),   _mv0);\
+  _mm_storeu_si128((__m128i *)&(_mb_)[8], _mv1);\
 }
 
 #define cdf16sansdec(_mb_, _st_, _x_) { /*static CDF*/\
@@ -140,7 +140,7 @@
   _x_  = ctz16(_mm_movemask_epi8(_gv0))); \
   _st_ =  STATEUPD(_mb_,_st_,_x_);\
   _mv0 = _mm_add_epi16(_mv0,_mm_srai_epi16(_mm_add_epi16(_mm_sub_epi16(_crv0,_mv0),_mm_and_si128(_gv0,_cmv)), CDFRATE));\
-  _mm_storeu_si128((const __m128i *)(_mb_),   _mv0);\
+  _mm_storeu_si128((__m128i *)(_mb_),   _mv0);\
 }
 
 #define cdf8upd(_mb_, _x_) {\
@@ -148,7 +148,7 @@
           _sv  = _mm_set1_epi16(_mb_[_x_]),\
 	      _gv0 = _mm_cmpgt_epi16(_mv0, _sv),\
   _mv0 = _mm_add_epi16(_mv0,_mm_srai_epi16(_mm_add_epi16(_mm_sub_epi16(_crv0,_mv0),_mm_and_si128(_gv0,_cmv)), CDFRATE));\
-  _mm_storeu_si128((const __m128i *)(_mb_),   _mv0);\
+  _mm_storeu_si128((__m128i *)(_mb_),   _mv0);\
 }
 #else
 #define CDF16DEF

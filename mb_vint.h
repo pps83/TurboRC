@@ -156,7 +156,7 @@
     }\
     _q += _qmax_;                                                                       /* build the quotient*/\
   }\
-  uint64_t _x = 1; _mbgbd(_rcrange_,_rccode_, &(_mgb_)[__bsr32(_q+1)+1], _prm0_,_prm1_,_ip_, _x, _q); /* decode mantissa _q bits */\
+  uint64_t _x = 1; _mbgbd(_rcrange_,_rccode_, (_mgb_)[__bsr32(_q+1)+1], _prm0_,_prm1_,_ip_, _x, _q); /* decode mantissa _q bits */\
   _x_ = _x - 1;\
 } while(0)	
 
@@ -166,9 +166,9 @@
   if(_q > _qmax_) {											           		            /* quotient greater than limit _qmax_ */\
     unsigned _qx = _q - _qmax_; int _qb = __bsr32(_qx)+1; 	   				            /*AS(_qmax_+_qb+1 < 46,"mbrenc32: Fatal %d\n", _qmax_+_qb+1);*/	/* (_q - _qmax_) size in bits */\
     _mbgue(_rcrange_,_rclow_,_rcilow_, _mgu_,      _prm0_,_prm1_, _op_, _qmax_+_qb); 		    /* encode (_qmax_+_qb) in unary coding */\
-	_mbgbe(_rcrange_,_rclow_,_rcilow_, &(_mgb_)[0],_prm0_,_prm1_, _op_, _qx, _qb-1); \
+	_mbgbe(_rcrange_,_rclow_,_rcilow_, (_mgb_)[0],_prm0_,_prm1_, _op_, _qx, _qb-1); \
   } else _mbgue(_rcrange_,_rclow_,_rcilow_, _mgu_, _prm0_,_prm1_, _op_, _q); 		            /* _q in unary coding*/\
-  _mbgbe(_rcrange_,_rclow_,_rcilow_, &(_mgb_)[__bsr32(_q+1)+1],_prm0_,_prm1_, _op_, _x, _log2m_);/* _log2m_ lsb bits of the remainder*/\
+  _mbgbe(_rcrange_,_rclow_,_rcilow_, (_mgb_)[__bsr32(_q+1)+1],_prm0_,_prm1_, _op_, _x, _log2m_);/* _log2m_ lsb bits of the remainder*/\
 }
 
 #define mbrdec32(_rcrange_, _rccode_, _mgu_,_mgb_,_prm0_,_prm1_, _ip_, _x_, _qmax_, _log2m_) {\
@@ -176,11 +176,11 @@
   _mbgud(_rcrange_,_rccode_, _mgu_, _prm0_,_prm1_, _ip_, _q);\
   if(_q > _qmax_) {\
     int _qb = _q - _qmax_;                                                              /* lsb bits length of the quotient */\
-	_x = 1; _mbgbd(_rcrange_,_rccode_, &(_mgb_)[0], _prm0_,_prm1_,_ip_, _x, _qb-1);     /* decode lsb bits (msb always 1) */\
+	_x = 1; _mbgbd(_rcrange_,_rccode_, (_mgb_)[0], _prm0_,_prm1_,_ip_, _x, _qb-1);     /* decode lsb bits (msb always 1) */\
     _x += _qmax_;                                                                       /* build the quotient*/\
     _q  = _x;\
   } else _x = _q;\
-  _mbgbd(_rcrange_,_rccode_, &(_mgb_)[__bsr32(_q+1)+1], _prm0_,_prm1_,_ip_, _x, _log2m_);/* decode mantissa _log2m_ bits */\
+  _mbgbd(_rcrange_,_rccode_, (_mgb_)[__bsr32(_q+1)+1], _prm0_,_prm1_,_ip_, _x, _log2m_);/* decode mantissa _log2m_ bits */\
   _x_ = _x; \
 }
 
